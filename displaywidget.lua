@@ -1,4 +1,5 @@
 local Blitbuffer = require("ffi/blitbuffer")
+local Date = os.date
 local Datetime = require("frontend/datetime")
 local Device = require("device")
 local Font = require("ui/font")
@@ -6,11 +7,13 @@ local FrameContainer = require('ui/widget/container/framecontainer')
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local InputContainer = require("ui/widget/container/inputcontainer")
+local NetworkMgr = require("ui/network/manager")
 local Screen = Device.screen
 local TextBoxWidget = require("ui/widget/textboxwidget")
 local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
-local Date = os.date
+
+local T = require("ffi/util").template
 local _ = require("gettext")
 
 local DisplayWidget = InputContainer:extend {
@@ -71,10 +74,43 @@ end
 
 DisplayWidget.onAnyKeyPressed = DisplayWidget.onTapClose
 
+function DisplayWidget:getWifiStatusText()
+    if NetworkMgr:isWifiOn() then
+        return _("")
+    else
+        return _("")
+    end
+end
+
+function DisplayWidget:getMemoryStatusText()
+    -- Based on the implemenation in readerfooter.lua
+    local statm = io.open("/proc/self/statm", "r")
+    if statm then
+        local dummy, rss = statm:read("*number", "*number")
+        statm:close()
+        -- we got the nb of 4Kb-pages used, that we convert to MiB
+        rss = math.floor(rss * (4096 / 1024 / 1024))
+        return T(_(" %1 MiB"), rss)
+    end
+end
+
+function DisplayWidget:getBatteryStatusText()
+    if Device:hasBattery() then
+        local powerd = Device:getPowerDevice()
+        local battery_level = powerd:getCapacity()
+        local prefix = powerd:getBatterySymbol(
+            powerd:isCharged(),
+            powerd:isCharging(),
+            battery_level
+        )
+        return T(_("%1 %2 %"), prefix, battery_level)
+    end
+end
+
 function DisplayWidget:renderTimeWidget(now, width, font_face)
     return TextBoxWidget:new {
         text = Datetime.secondsToHour(now, true, false),
-        face = font_face or Font:getFace("tfont", 96),
+        face = font_face or Font:getFace("tfont", 119),
         width = width or Screen:getWidth(),
         alignment = "center",
         bold = true,
@@ -84,6 +120,22 @@ end
 function DisplayWidget:renderDateWidget(now, width, font_face, use_locale)
     return TextBoxWidget:new {
         text = Datetime.secondsToDate(now, use_locale),
+        face = font_face or Font:getFace("infofont", 32),
+        width = width or Screen:getWidth(),
+        alignment = "center",
+    }
+end
+
+function DisplayWidget:renderStatusWidget(width, font_face)
+    local wifi_string = self:getWifiStatusText()
+    local memory_string = self:getMemoryStatusText()
+    local battery_string = self:getBatteryStatusText()
+
+    local status_strings = { wifi_string, memory_string, battery_string }
+    local status_text = table.concat(status_strings, " | ")
+
+    return TextBoxWidget:new {
+        text = status_text,
         face = font_face or Font:getFace("infofont"),
         width = width or Screen:getWidth(),
         alignment = "center",
@@ -98,13 +150,17 @@ function DisplayWidget:render()
     local time_widget = self:renderTimeWidget(
         now,
         screen_size.w,
-        Font:getFace("tfont", 96)
+        Font:getFace("tfont", 119)
     )
     local date_widget = self:renderDateWidget(
         now,
         screen_size.w,
-        Font:getFace("infofont"),
+        Font:getFace("largeffont"),
         true
+    )
+    local status_widget = self:renderStatusWidget(
+        screen_size.w,
+        Font:getFace("infofont")
     )
 
     -- Compute the widget heights and the amount of spacing we need
@@ -121,8 +177,9 @@ function DisplayWidget:render()
 
     -- Lay out and assemble
     self.datetime_vertical_group = VerticalGroup:new {
-        time_widget,
         date_widget,
+        time_widget,
+        status_widget,
     }
     local vertical_group = VerticalGroup:new {
         spacer_widget,
