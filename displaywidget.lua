@@ -23,6 +23,10 @@ local DisplayWidget = InputContainer:extend {
 
 function DisplayWidget:init()
     -- Properties
+    self.now = os.time()
+    self.time_widget = nil
+    self.date_widget = nil
+    self.status_widget = nil
     self.datetime_vertical_group = nil
     self.autoRefresh = function()
         self:refresh()
@@ -50,7 +54,8 @@ function DisplayWidget:init()
 end
 
 function DisplayWidget:refresh()
-    self[1] = self:render()
+    self.now = os.time()
+    self:update()
     UIManager:setDirty("all", "ui", self.datetime_vertical_group.dimen)
 end
 
@@ -107,9 +112,43 @@ function DisplayWidget:getBatteryStatusText()
     end
 end
 
+function DisplayWidget:getStatusText()
+    local wifi_string = self:getWifiStatusText()
+    local memory_string = self:getMemoryStatusText()
+    local battery_string = self:getBatteryStatusText()
+
+    local status_strings = { wifi_string, memory_string, battery_string }
+    return table.concat(status_strings, " | ")
+end
+
+function DisplayWidget:getDateText(now, use_locale)
+    return Datetime.secondsToDate(now, use_locale)
+end
+
+function DisplayWidget:getTimeText(now)
+    return Datetime.secondsToHour(now, true, false)
+end
+
+function DisplayWidget:update()
+    local time_text = self:getTimeText(self.now)
+    local date_text = self:getDateText(self.now, true)
+    local status_text = self:getStatusText()
+
+    -- Avoid spamming repeated calls to setText
+    if self.time_widget.text ~= time_text then
+        self.time_widget:setText(time_text)
+    end
+    if self.date_widget.text ~= date_text then
+        self.date_widget:setText(date_text)
+    end
+    if self.status_widget.text ~= status_text then
+        self.status_widget:setText(status_text)
+    end
+end
+
 function DisplayWidget:renderTimeWidget(now, width, font_face)
     return TextBoxWidget:new {
-        text = Datetime.secondsToHour(now, true, false),
+        text = self:getTimeText(now),
         face = font_face or Font:getFace("tfont", 119),
         width = width or Screen:getWidth(),
         alignment = "center",
@@ -119,7 +158,7 @@ end
 
 function DisplayWidget:renderDateWidget(now, width, font_face, use_locale)
     return TextBoxWidget:new {
-        text = Datetime.secondsToDate(now, use_locale),
+        text = self:getDateText(now, use_locale),
         face = font_face or Font:getFace("infofont", 32),
         width = width or Screen:getWidth(),
         alignment = "center",
@@ -127,15 +166,8 @@ function DisplayWidget:renderDateWidget(now, width, font_face, use_locale)
 end
 
 function DisplayWidget:renderStatusWidget(width, font_face)
-    local wifi_string = self:getWifiStatusText()
-    local memory_string = self:getMemoryStatusText()
-    local battery_string = self:getBatteryStatusText()
-
-    local status_strings = { wifi_string, memory_string, battery_string }
-    local status_text = table.concat(status_strings, " | ")
-
     return TextBoxWidget:new {
-        text = status_text,
+        text = self:getStatusText(),
         face = font_face or Font:getFace("infofont"),
         width = width or Screen:getWidth(),
         alignment = "center",
@@ -143,28 +175,27 @@ function DisplayWidget:renderStatusWidget(width, font_face)
 end
 
 function DisplayWidget:render()
-    local now = os.time()
     local screen_size = Screen:getSize()
 
     -- Insntiate widgets
-    local time_widget = self:renderTimeWidget(
-        now,
+    self.time_widget = self:renderTimeWidget(
+        self.now,
         screen_size.w,
         Font:getFace("tfont", 119)
     )
-    local date_widget = self:renderDateWidget(
-        now,
+    self.date_widget = self:renderDateWidget(
+        self.now,
         screen_size.w,
         Font:getFace("largeffont"),
         true
     )
-    local status_widget = self:renderStatusWidget(
+    self.status_widget = self:renderStatusWidget(
         screen_size.w,
         Font:getFace("infofont")
     )
 
     -- Compute the widget heights and the amount of spacing we need
-    local total_height = time_widget:getSize().h + date_widget:getSize().h
+    local total_height = self.time_widget:getSize().h + self.date_widget:getSize().h + self.status_widget:getSize().h
     local spacer_height = (screen_size.h - total_height) / 2
 
     -- HELP: is there a better way of drawing blank space?
@@ -177,9 +208,9 @@ function DisplayWidget:render()
 
     -- Lay out and assemble
     self.datetime_vertical_group = VerticalGroup:new {
-        date_widget,
-        time_widget,
-        status_widget,
+        self.date_widget,
+        self.time_widget,
+        self.status_widget,
     }
     local vertical_group = VerticalGroup:new {
         spacer_widget,
