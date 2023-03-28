@@ -14,12 +14,18 @@ local DtDisplay = WidgetContainer:extend {
 
 function DtDisplay:init()
     self.settings = {
-        date_font_size = 123,
-        time_font_size = 123,
-        statusline_font_size = 123,
-        date_font_name = "",
-        time_font_name = "",
-        statusline_font_name = ""
+        date_widget = {
+            font_name = "",
+            font_size = 123,
+        },
+        time_widget = {
+            font_name = "",
+            font_size = 123,
+        },
+        status_widget = {
+            font_name = "",
+            font_size = 123,
+        },
     }
 
     self.ui.menu:registerToMainMenu(self)
@@ -44,7 +50,7 @@ function DtDisplay:addToMainMenu(menu_items)
                         self:setDateFont(font_name)
                     end,
                     function(font)
-                        return font == self.settings["date_font_name"]
+                        return font == self.settings.date_widget.font_name
                     end
                 ),
             },
@@ -55,7 +61,7 @@ function DtDisplay:addToMainMenu(menu_items)
                         self:setTimeFont(font_name)
                     end,
                     function(font)
-                        return font == self.settings["time_font_name"]
+                        return font == self.settings.time_widget.font_name
                     end
                 ),
             },
@@ -66,7 +72,7 @@ function DtDisplay:addToMainMenu(menu_items)
                         self:setStatuslineFont(font_name)
                     end,
                     function(font)
-                        return font == self.settings["statusline_font_name"]
+                        return font == self.settings.status_widget.font_name
                     end
                 ),
             }
@@ -138,15 +144,15 @@ function DtDisplay:getFontMenuList(callback, checked_func)
 end
 
 function DtDisplay:setDateFont(font)
-    self.settings["date_font_name"] = font
+    self.settings["date_widget"]["font_name"] = font
 end
 
 function DtDisplay:setTimeFont(font)
-    self.settings["time_font_name"] = font
+    self.settings["time_widget"]["font_name"] = font
 end
 
 function DtDisplay:setStatuslineFont(font)
-    self.settings["statusline_font_name"] = font
+    self.settings["status_widget"]["font_name"] = font
 end
 
 return DtDisplay
