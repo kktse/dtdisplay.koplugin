@@ -47,6 +47,16 @@ function DtDisplay:getFontMenuList()
     cre = require("document/credocument"):engineInit()
     local face_list = cre.getFontFaces()
     local menu_list = {}
+
+    -- Font size
+    table.insert(menu_list, {
+        text_func = function()
+            return _("Font size: ")
+        end,
+        separator = true
+    })
+
+    -- Font list
     for k, v in ipairs(face_list) do
         local font_filename, font_faceindex, is_monospace = cre.getFontFaceFilenameAndFaceIndex(v)
         table.insert(menu_list, {
