@@ -3,7 +3,9 @@ local Font = require("ui/font")
 local FontList = require("fontlist")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
+local cre -- delayed loading
 local _ = require("gettext")
+
 
 local DtDisplay = WidgetContainer:extend {
     name = "dtdisplay",
@@ -11,6 +13,15 @@ local DtDisplay = WidgetContainer:extend {
 }
 
 function DtDisplay:init()
+    self.settings = {
+        date_font_size = 123,
+        time_font_size = 123,
+        statusline_font_size = 123,
+        date_font_name = "",
+        time_font_name = "",
+        statusline_font_name = ""
+    }
+
     self.ui.menu:registerToMainMenu(self)
 end
 
@@ -28,21 +39,42 @@ function DtDisplay:addToMainMenu(menu_items)
             },
             {
                 text = _("Date widget font"),
-                sub_item_table = self:getFontMenuList(),
+                sub_item_table = self:getFontMenuList(
+                    function(font_name)
+                        self:setDateFont(font_name)
+                    end,
+                    function(font)
+                        return font == self.settings["date_font_name"]
+                    end
+                ),
             },
             {
                 text = _("Time widget font"),
-                sub_item_table = self:getFontMenuList(),
+                sub_item_table = self:getFontMenuList(
+                    function(font_name)
+                        self:setTimeFont(font_name)
+                    end,
+                    function(font)
+                        return font == self.settings["time_font_name"]
+                    end
+                ),
             },
             {
                 text = _("Status line font"),
-                sub_item_table = self:getFontMenuList(),
+                sub_item_table = self:getFontMenuList(
+                    function(font_name)
+                        self:setStatuslineFont(font_name)
+                    end,
+                    function(font)
+                        return font == self.settings["statusline_font_name"]
+                    end
+                ),
             }
         },
     }
 end
 
-function DtDisplay:getFontMenuList()
+function DtDisplay:getFontMenuList(callback, checked_func)
     -- Based on readerfont.lua
     cre = require("document/credocument"):engineInit()
     local face_list = cre.getFontFaces()
@@ -91,16 +123,30 @@ function DtDisplay:getFontMenuList()
                 end
             end,
             callback = function()
+                return callback(v)
             end,
             hold_callback = function(touchmenu_instance)
             end,
             checked_func = function()
+                return checked_func(v)
             end,
             menu_item_id = v,
         })
     end
 
     return menu_list
+end
+
+function DtDisplay:setDateFont(font)
+    self.settings["date_font_name"] = font
+end
+
+function DtDisplay:setTimeFont(font)
+    self.settings["time_font_name"] = font
+end
+
+function DtDisplay:setStatuslineFont(font)
+    self.settings["statusline_font_name"] = font
 end
 
 return DtDisplay
