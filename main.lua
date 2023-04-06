@@ -5,7 +5,7 @@ local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local cre -- delayed loading
 local _ = require("gettext")
-
+local T = require("ffi/util").template
 
 local DtDisplay = WidgetContainer:extend {
     name = "dtdisplay",
@@ -46,41 +46,71 @@ function DtDisplay:addToMainMenu(menu_items)
             {
                 text = _("Date widget font"),
                 sub_item_table = self:getFontMenuList(
-                    function(font_name)
-                        self:setDateFont(font_name)
-                    end,
-                    function(font)
-                        return font == self.settings.date_widget.font_name
-                    end
+                    {
+                        font_callback = function(font_name)
+                            self:setDateFont(font_name)
+                        end,
+                        font_size_callback = function(font_size)
+                            self:setDateFontSize(font_size)
+                        end,
+                        font_size_func = function()
+                            return self.settings.date_widget.font_size
+                        end,
+                        checked_func = function(font)
+                            return font == self.settings.date_widget.font_name
+                        end
+                    }
                 ),
             },
             {
                 text = _("Time widget font"),
                 sub_item_table = self:getFontMenuList(
-                    function(font_name)
-                        self:setTimeFont(font_name)
-                    end,
-                    function(font)
-                        return font == self.settings.time_widget.font_name
-                    end
+                    {
+                        font_callback = function(font_name)
+                            self:setTimeFont(font_name)
+                        end,
+                        font_size_callback = function(font_size)
+                            self:setTimeFontSize(font_size)
+                        end,
+                        font_size_func = function()
+                            return self.settings.time_widget.font_size
+                        end,
+                        checked_func = function(font)
+                            return font == self.settings.time_widget.font_name
+                        end
+                    }
                 ),
             },
             {
                 text = _("Status line font"),
                 sub_item_table = self:getFontMenuList(
-                    function(font_name)
-                        self:setStatuslineFont(font_name)
-                    end,
-                    function(font)
-                        return font == self.settings.status_widget.font_name
-                    end
+                    {
+                        font_callback = function(font_name)
+                            self:setStatuslineFont(font_name)
+                        end,
+                        font_size_callback = function(font_size)
+                            self:setStatuslineFontSize(font_size)
+                        end,
+                        font_size_func = function()
+                            return self.settings.status_widget.font_size
+                        end,
+                        checked_func = function(font)
+                            return font == self.settings.status_widget.font_name
+                        end
+                    }
                 ),
             }
         },
     }
 end
 
-function DtDisplay:getFontMenuList(callback, checked_func)
+function DtDisplay:getFontMenuList(args)
+    -- Unpack arguments
+    local font_callback = args.font_callback
+    local font_size_callback = args.font_size_callback
+    local font_size_func = args.font_size_func
+    local checked_func = args.checked_func
+
     -- Based on readerfont.lua
     cre = require("document/credocument"):engineInit()
     local face_list = cre.getFontFaces()
@@ -89,8 +119,12 @@ function DtDisplay:getFontMenuList(callback, checked_func)
     -- Font size
     table.insert(menu_list, {
         text_func = function()
-            return _("Font size: ")
+            return T(_("Font size: %1"), font_size_func())
         end,
+        callback = function(touchmenu_instance)
+            self:showFontSizeSpinWidget(touchmenu_instance, font_size_func(), font_size_callback)
+        end,
+        keep_menu_open = true,
         separator = true
     })
 
@@ -129,7 +163,7 @@ function DtDisplay:getFontMenuList(callback, checked_func)
                 end
             end,
             callback = function()
-                return callback(v)
+                return font_callback(v)
             end,
             hold_callback = function(touchmenu_instance)
             end,
@@ -153,6 +187,42 @@ end
 
 function DtDisplay:setStatuslineFont(font)
     self.settings["status_widget"]["font_name"] = font
+end
+
+function DtDisplay:setDateFontSize(font_size)
+    self.settings["date_widget"]["font_size"] = font_size
+end
+
+function DtDisplay:setTimeFontSize(font_size)
+    self.settings["time_widget"]["font_size"] = font_size
+end
+
+function DtDisplay:setStatuslineFontSize(font_size)
+    self.settings["status_widget"]["font_size"] = font_size
+end
+
+function DtDisplay:showDateTimeWidget()
+    UIManager:show(DisplayWidget:new {})
+end
+
+function DtDisplay:showFontSizeSpinWidget(touchmenu_instance, font_size, callback)
+    -- Lazy loading the widget import
+    local SpinWidget = require("ui/widget/spinwidget")
+    UIManager:show(
+        SpinWidget:new {
+            value = font_size,
+            value_min = 8,
+            value_max = 256,
+            value_step = 1,
+            value_hold_step = 5,
+            ok_text = _("Set font size"),
+            title_text = _("Set font size"),
+            callback = function(spin)
+                callback(spin.value)
+                touchmenu_instance:updateItems()
+            end
+        }
+    )
 end
 
 return DtDisplay
