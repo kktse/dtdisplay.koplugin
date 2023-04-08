@@ -16,15 +16,15 @@ function DtDisplay:init()
     self.settings = {
         date_widget = {
             font_name = "",
-            font_size = 123,
+            font_size = 25,
         },
         time_widget = {
             font_name = "",
-            font_size = 123,
+            font_size = 119,
         },
         status_widget = {
             font_name = "",
-            font_size = 123,
+            font_size = 24,
         },
     }
 
@@ -40,7 +40,7 @@ function DtDisplay:addToMainMenu(menu_items)
                 text = _("Launch"),
                 separator = true,
                 callback = function()
-                    UIManager:show(DisplayWidget:new {})
+                    UIManager:show(DisplayWidget:new { props = self.settings })
                 end,
             },
             {
@@ -163,12 +163,12 @@ function DtDisplay:getFontMenuList(args)
                 end
             end,
             callback = function()
-                return font_callback(v)
+                return font_callback(font_filename)
             end,
             hold_callback = function(touchmenu_instance)
             end,
             checked_func = function()
-                return checked_func(v)
+                return checked_func(font_filename)
             end,
             menu_item_id = v,
         })
