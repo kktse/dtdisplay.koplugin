@@ -147,7 +147,7 @@ end
 function DisplayWidget:renderTimeWidget(now, width, font_face)
     return TextBoxWidget:new {
         text = self:getTimeText(now),
-        face = font_face or Font:getFace("infofont", 119),
+        face = font_face or Font:getFace("tfont", 119),
         width = width or Screen:getWidth(),
         alignment = "center",
         bold = true,

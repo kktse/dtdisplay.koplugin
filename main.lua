@@ -242,7 +242,7 @@ function DtDisplay:showFontSizeSpinWidget(touchmenu_instance, font_size, callbac
             value_min = 8,
             value_max = 256,
             value_step = 1,
-            value_hold_step = 5,
+            value_hold_step = 10,
             ok_text = _("Set font size"),
             title_text = _("Set font size"),
             callback = function(spin)
