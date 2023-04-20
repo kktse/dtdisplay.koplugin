@@ -1,6 +1,8 @@
 local DisplayWidget = require("displaywidget")
+local DataStorage = require("datastorage")
 local Font = require("ui/font")
 local FontList = require("fontlist")
+local LuaSettings = require("frontend/luasettings")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local cre -- delayed loading
@@ -9,26 +11,40 @@ local T = require("ffi/util").template
 
 local DtDisplay = WidgetContainer:extend {
     name = "dtdisplay",
+    config_file = "dtdisplay_config.lua",
+    local_storage = nil,
     is_doc_only = false,
 }
 
 function DtDisplay:init()
-    self.settings = {
-        date_widget = {
-            font_name = "",
-            font_size = 25,
-        },
-        time_widget = {
-            font_name = "",
-            font_size = 119,
-        },
-        status_widget = {
-            font_name = "",
-            font_size = 24,
-        },
-    }
+    local logger = require("logger")
+    logger.dbg("SDKLFJSDKLFJSDKLFJKLSDJLK settings dir", ("%s/%s"):format(DataStorage:getSettingsDir(), self.config_file))
 
+    self:initLuaSettings()
+
+    self.settings = self.local_storage.data
     self.ui.menu:registerToMainMenu(self)
+end
+
+function DtDisplay:initLuaSettings()
+    self.local_storage = LuaSettings:open(("%s/%s"):format(DataStorage:getSettingsDir(), self.config_file))
+    if next(self.local_storage.data) == nil then
+        self.local_storage:reset({
+            date_widget = {
+                font_name = "./fonts/noto/NotoSans-Regular.ttf",
+                font_size = 25,
+            },
+            time_widget = {
+                font_name = "./fonts/noto/NotoSans-Regular.ttf",
+                font_size = 119,
+            },
+            status_widget = {
+                font_name = "./fonts/noto/NotoSans-Regular.ttf",
+                font_size = 24,
+            },
+        })
+        self.local_storage:flush()
+    end
 end
 
 function DtDisplay:addToMainMenu(menu_items)
@@ -179,26 +195,38 @@ end
 
 function DtDisplay:setDateFont(font)
     self.settings["date_widget"]["font_name"] = font
+    self.local_storage:reset(self.settings)
+    self.local_storage:flush()
 end
 
 function DtDisplay:setTimeFont(font)
     self.settings["time_widget"]["font_name"] = font
+    self.local_storage:reset(self.settings)
+    self.local_storage:flush()
 end
 
 function DtDisplay:setStatuslineFont(font)
     self.settings["status_widget"]["font_name"] = font
+    self.local_storage:reset(self.settings)
+    self.local_storage:flush()
 end
 
 function DtDisplay:setDateFontSize(font_size)
     self.settings["date_widget"]["font_size"] = font_size
+    self.local_storage:reset(self.settings)
+    self.local_storage:flush()
 end
 
 function DtDisplay:setTimeFontSize(font_size)
     self.settings["time_widget"]["font_size"] = font_size
+    self.local_storage:reset(self.settings)
+    self.local_storage:flush()
 end
 
 function DtDisplay:setStatuslineFontSize(font_size)
     self.settings["status_widget"]["font_size"] = font_size
+    self.local_storage:reset(self.settings)
+    self.local_storage:flush()
 end
 
 function DtDisplay:showDateTimeWidget()
