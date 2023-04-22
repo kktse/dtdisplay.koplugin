@@ -17,8 +17,7 @@ local T = require("ffi/util").template
 local _ = require("gettext")
 
 local DisplayWidget = InputContainer:extend {
-    on_dismiss = function()
-    end,
+    props = {},
 }
 
 function DisplayWidget:init()
@@ -72,7 +71,6 @@ function DisplayWidget:onSuspend()
 end
 
 function DisplayWidget:onTapClose()
-    self.on_dismiss()
     UIManager:unschedule(self.autoRefresh)
     UIManager:close(self)
 end
@@ -181,17 +179,26 @@ function DisplayWidget:render()
     self.time_widget = self:renderTimeWidget(
         self.now,
         screen_size.w,
-        Font:getFace("tfont", 119)
+        Font:getFace(
+            self.props.time_widget.font_name,
+            self.props.time_widget.font_size
+        )
     )
     self.date_widget = self:renderDateWidget(
         self.now,
         screen_size.w,
-        Font:getFace("largeffont"),
+        Font:getFace(
+            self.props.date_widget.font_name,
+            self.props.date_widget.font_size
+        ),
         true
     )
     self.status_widget = self:renderStatusWidget(
         screen_size.w,
-        Font:getFace("infofont")
+        Font:getFace(
+            self.props.status_widget.font_name,
+            self.props.status_widget.font_size
+        )
     )
 
     -- Compute the widget heights and the amount of spacing we need
