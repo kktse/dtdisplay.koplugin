@@ -17,9 +17,6 @@ local DtDisplay = WidgetContainer:extend {
 }
 
 function DtDisplay:init()
-    local logger = require("logger")
-    logger.dbg("SDKLFJSDKLFJSDKLFJKLSDJLK settings dir", ("%s/%s"):format(DataStorage:getSettingsDir(), self.config_file))
-
     self:initLuaSettings()
 
     self.settings = self.local_storage.data
