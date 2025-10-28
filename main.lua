@@ -1,3 +1,4 @@
+local Dispatcher = require("dispatcher")
 local DisplayWidget = require("displaywidget")
 local DataStorage = require("datastorage")
 local Font = require("ui/font")
@@ -20,6 +21,7 @@ function DtDisplay:init()
     self:initLuaSettings()
 
     self.settings = self.local_storage.data
+    self:onDispatcherRegisterActions()
     self.ui.menu:registerToMainMenu(self)
 end
 
@@ -230,6 +232,10 @@ function DtDisplay:showDateTimeWidget()
     UIManager:show(DisplayWidget:new {})
 end
 
+function DtDisplay:onDTDisplayLaunch()
+    UIManager:show(DisplayWidget:new { props = self.settings })
+end
+
 function DtDisplay:showFontSizeSpinWidget(touchmenu_instance, font_size, callback)
     -- Lazy loading the widget import
     local SpinWidget = require("ui/widget/spinwidget")
@@ -248,6 +254,10 @@ function DtDisplay:showFontSizeSpinWidget(touchmenu_instance, font_size, callbac
             end
         }
     )
+end
+
+function DtDisplay:onDispatcherRegisterActions()
+    Dispatcher:registerAction("dtdisplay_launch", { category="none", event="DTDisplayLaunch", title=_("Launch Time & Day"), general=true})
 end
 
 return DtDisplay
