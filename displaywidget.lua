@@ -124,7 +124,7 @@ function DisplayWidget:getDateText(now, use_locale)
 end
 
 function DisplayWidget:getTimeText(now)
-    return Datetime.secondsToHour(now, true, false)
+    return Datetime.secondsToHour(now, G_reader_settings:isTrue("twelve_hour_clock"), false)
 end
 
 function DisplayWidget:update()

@@ -228,10 +228,6 @@ function DtDisplay:setStatuslineFontSize(font_size)
     self.local_storage:flush()
 end
 
-function DtDisplay:showDateTimeWidget()
-    UIManager:show(DisplayWidget:new {})
-end
-
 function DtDisplay:onDTDisplayLaunch()
     UIManager:show(DisplayWidget:new { props = self.settings })
 end
